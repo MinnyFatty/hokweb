@@ -274,7 +274,7 @@ declare namespace WebAssembly {
     interface TableDescriptor {
         element: TableKind;
         initial: number;
-        maximum?: number;
+        maximum?: number; 
     }
     class Table {
         constructor(descriptor: TableDescriptor, value?: any);
