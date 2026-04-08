@@ -1,5 +1,10 @@
 // @ts-nocheck
-import { json, type ActionArgs } from "react-router";
+import type { ActionArgs } from "react-router";
+
+const json = (data: any, init?: ResponseInit) => {
+  const headers = { "Content-Type": "application/json", ...(init?.headers as Record<string, string> | undefined) };
+  return new Response(JSON.stringify(data), { status: init?.status ?? 200, headers });
+};
 
 // Server-side action to handle contact form submissions.
 // When running on Cloudflare Workers this will store submissions in a KV namespace
