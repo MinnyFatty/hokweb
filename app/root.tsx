@@ -1,5 +1,6 @@
 import {
 	isRouteErrorResponse,
+	Link,
 	Links,
 	Meta,
 	Outlet,
@@ -8,6 +9,7 @@ import {
 } from "react-router";
 
 import type { Route } from "./+types/root";
+import { BrandLogo } from "./components/brand";
 import "./app.css";
 
 export const links: Route.LinksFunction = () => [
@@ -19,7 +21,7 @@ export const links: Route.LinksFunction = () => [
 	},
 	{
 		rel: "stylesheet",
-		href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
+		href: "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;700&family=Manrope:wght@400;500;700;800&display=swap",
 	},
 ];
 
@@ -32,7 +34,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 				<Meta />
 				<Links />
 			</head>
-			<body>
+			<body className="brand-body">
 				{children}
 				<ScrollRestoration />
 				<Scripts />
@@ -42,7 +44,22 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-	return <Outlet />;
+	return (
+		<div className="site-shell">
+			<header className="site-header">
+				<Link to="/" className="brand-link" aria-label="Go to House of Knowledge home page">
+					<BrandLogo compact />
+				</Link>
+				<nav className="site-nav" aria-label="Primary">
+					<Link to="/">Home</Link>
+					<Link to="/contact">Contacts</Link>
+				</nav>
+			</header>
+			<main className="site-main">
+				<Outlet />
+			</main>
+		</div>
+	);
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
@@ -62,11 +79,11 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 	}
 
 	return (
-		<main className="pt-16 p-4 container mx-auto">
+		<main className="error-view">
 			<h1>{message}</h1>
 			<p>{details}</p>
 			{stack && (
-				<pre className="w-full p-4 overflow-x-auto">
+				<pre className="error-stack">
 					<code>{stack}</code>
 				</pre>
 			)}

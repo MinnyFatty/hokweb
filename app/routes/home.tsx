@@ -1,17 +1,43 @@
 import type { Route } from "./+types/home";
-import { Welcome } from "../welcome/welcome";
+import { Link } from "react-router";
+import { BrandLogo } from "../components/brand";
 
 export function meta({}: Route.MetaArgs) {
 	return [
-		{ title: "New React Router App" },
-		{ name: "description", content: "Welcome to React Router!" },
+		{ title: "House of Knowledge" },
+		{
+			name: "description",
+			content: "House of Knowledge offers practical learning paths, guidance, and support.",
+		},
 	];
 }
 
-export function loader({ context }: Route.LoaderArgs) {
-	return { message: context.cloudflare.env.VALUE_FROM_CLOUDFLARE };
-}
-
-export default function Home({ loaderData }: Route.ComponentProps) {
-	return <Welcome message={loaderData.message} />;
+export default function Home() {
+	return (
+		<section className="hero-panel">
+			<div className="hero-grid">
+				<div className="hero-copy">
+					<BrandLogo className="hero-brand" />
+					<h1>Build knowledge that stays with you.</h1>
+					<p>
+						From first principles to practical skills, House of Knowledge helps
+						you turn curiosity into capability.
+					</p>
+					<div className="hero-actions">
+						<Link className="button-primary" to="/contact">
+							Go to Contacts Page
+						</Link>
+					</div>
+				</div>
+				<div className="hero-card" aria-hidden="true">
+					<p className="hero-card-label">Core Focus</p>
+					<ul>
+						<li>Academic support and mentoring</li>
+						<li>Structured learning resources</li>
+						<li>Community-driven progress</li>
+					</ul>
+				</div>
+			</div>
+		</section>
+	);
 }

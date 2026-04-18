@@ -1,6 +1,16 @@
 // @ts-nocheck
 import type { ActionArgs } from "react-router";
 
+export function meta() {
+  return [
+    { title: "Contacts | House of Knowledge" },
+    {
+      name: "description",
+      content: "Contact House of Knowledge and submit your details through our contact form.",
+    },
+  ];
+}
+
 const json = (data: any, init?: ResponseInit) => {
   const headers = { "Content-Type": "application/json", ...(init?.headers as Record<string, string> | undefined) };
   return new Response(JSON.stringify(data), { status: init?.status ?? 200, headers });
@@ -114,4 +124,56 @@ export async function action({ request, context }: ActionArgs) {
     console.error("Failed to write CSV", err);
     return json({ ok: false, error: "Failed to save" }, { status: 500 });
   }
+}
+
+export default function ContactPage() {
+  return (
+    <section className="contact-page">
+      <header className="contact-page-header">
+        <h1>House Of Knowledge</h1>
+        <p>Contact: admin@houseofknowledge.net</p>
+      </header>
+
+      <div className="contact-layout">
+        <article className="contact-intro">
+          <h2>Contact Us</h2>
+          <p>
+            Share your details and we will reach out with the right information,
+            learning options, and next steps.
+          </p>
+          <ul>
+            <li>Personal response from our team</li>
+            <li>Guidance based on your interests</li>
+            <li>Clear next actions after submission</li>
+          </ul>
+        </article>
+
+        <form method="post" className="contact-form">
+          <h2>Contact Form</h2>
+
+          <label>
+            <span>Name *</span>
+            <input name="name" required />
+          </label>
+
+          <label>
+            <span>Surname</span>
+            <input name="surname" />
+          </label>
+
+          <label>
+            <span>Email *</span>
+            <input name="email" type="email" required />
+          </label>
+
+          <label>
+            <span>Contact Number *</span>
+            <input name="contactNumber" required />
+          </label>
+
+          <button type="submit" className="button-primary">Submit</button>
+        </form>
+      </div>
+    </section>
+  );
 }
