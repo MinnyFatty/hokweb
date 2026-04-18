@@ -252,6 +252,56 @@ body {
 	color: rgb(17 47 89 / 0.82);
 }
 
+.contact-details {
+	margin-top: 1rem;
+	padding-top: 0.9rem;
+	border-top: 1px solid rgb(15 50 99 / 0.13);
+	display: flex;
+	flex-direction: column;
+	gap: 0.52rem;
+}
+
+.contact-details h3 {
+	margin: 0;
+	font-size: 0.95rem;
+	font-weight: 800;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: #0f3263;
+}
+
+.contact-detail-item {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.56rem;
+	padding: 0.42rem 0.52rem;
+	border-radius: 10px;
+	text-decoration: none;
+	color: rgb(15 50 99 / 0.92);
+	background: rgb(255 255 255 / 0.6);
+	transition: background-color 180ms ease, transform 180ms ease;
+}
+
+.contact-detail-item:hover {
+	background: rgb(127 197 217 / 0.22);
+	transform: translateX(2px);
+}
+
+.contact-icon {
+	font-size: 1rem;
+	width: 1.2rem;
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.social-logo {
+	width: 1.05rem;
+	height: 1.05rem;
+	display: block;
+	object-fit: contain;
+}
+
 .contact-form {
 	display: flex;
 	flex-direction: column;

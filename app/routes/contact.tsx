@@ -4,7 +4,7 @@ import type { ActionArgs } from "react-router";
 
 export function meta() {
   return [
-    { title: "Contacts | House of Knowledge" },
+    { title: "Contact Us | House of Knowledge" },
     {
       name: "description",
       content: "Contact House of Knowledge and submit your details through our contact form.",
@@ -147,6 +147,50 @@ export default function ContactPage() {
             <li>Guidance based on your interests</li>
             <li>Clear next actions after submission</li>
           </ul>
+
+          <div className="contact-details" aria-label="Direct contact details">
+            <h3>Direct Contact Details</h3>
+
+            <a className="contact-detail-item" href="tel:+27659272238" aria-label="Call House of Knowledge">
+              <span className="contact-icon" aria-hidden="true">📞</span>
+              <span>0659272238</span>
+            </a>
+
+            <a className="contact-detail-item" href="mailto:admin@houseofknowledge.net" aria-label="Email House of Knowledge">
+              <span className="contact-icon" aria-hidden="true">✉️</span>
+              <span>admin@houseofknowledge.net</span>
+            </a>
+
+            <a
+              className="contact-detail-item"
+              href="https://www.facebook.com/search/top?q=House%20of%20Knowledge%20-%20Light%20of%20Youth"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Open Facebook page"
+            >
+              <span className="contact-icon" aria-hidden="true">
+                <img className="social-logo" src="/fb_logo.png" alt="Facebook" />
+              </span>
+              <span>House of Knowledge - Light of Youth</span>
+            </a>
+
+            <a
+              className="contact-detail-item"
+              href="https://www.instagram.com/houseofknowledge_lightofyouth/"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Open Instagram page"
+            >
+              <span className="contact-icon" aria-hidden="true">
+                <img
+                  className="social-logo"
+                  src="/instagram-logo-png-transparent-background-300x300.png"
+                  alt="Instagram"
+                />
+              </span>
+              <span>@houseofknowledge_lightofyouth</span>
+            </a>
+          </div>
         </article>
 
         <form method="post" className="contact-form">

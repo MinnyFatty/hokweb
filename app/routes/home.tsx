@@ -1,6 +1,4 @@
-import { Link } from "react-router";
 import type { Route } from "./+types/home";
-import { Link } from "react-router";
 import { BrandLogo } from "../components/brand";
 
 export function meta({}: Route.MetaArgs) {
@@ -25,9 +23,9 @@ export default function Home() {
 						you turn curiosity into capability.
 					</p>
 					<div className="hero-actions">
-						<Link className="button-primary" to="/contact">
-							Go to Contacts Page
-						</Link>
+						<a className="button-primary" href="/contactus">
+							Go to Contact Us Page
+						</a>
 					</div>
 				</div>
 				<div className="hero-card" aria-hidden="true">

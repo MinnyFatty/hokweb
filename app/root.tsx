@@ -53,7 +53,7 @@ export default function App() {
 				</Link>
 				<nav className="site-nav" aria-label="Primary">
 					<Link to="/">Home</Link>
-					<Link to="/contact">Contacts</Link>
+					<Link to="/contactus">Contact Us</Link>
 				</nav>
 			</header>
 			<main className="site-main">
