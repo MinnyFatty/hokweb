@@ -1,6 +1,10 @@
 {
   "ExpandedNodes": [
-    ""
+    "",
+    "\\build",
+    "\\build\\client",
+    "\\build\\server"
   ],
+  "SelectedNode": "\\public",
   "PreviewInSolutionExplorer": false
 }

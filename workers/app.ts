@@ -1,4 +1,5 @@
 import { createRequestHandler } from "react-router";
+export { Contacts } from "./contacts";
 
 declare module "react-router" {
 	export interface AppLoadContext {

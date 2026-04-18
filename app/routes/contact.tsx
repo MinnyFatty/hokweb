@@ -32,6 +32,49 @@ export async function action({ request, context }: ActionArgs) {
 
   // Try to get Cloudflare env from route context (workers/app.ts passes this in)
   const env = (context as any)?.cloudflare?.env as Record<string, any> | undefined;
+  // Prefer writing to D1 if available
+  if (env && env.CONTACTS_DB) {
+    try {
+      // Ensure the table exists (safe to run on every submit)
+      await env.CONTACTS_DB.exec(
+        "CREATE TABLE IF NOT EXISTS contacts (id TEXT PRIMARY KEY, name TEXT, surname TEXT, email TEXT, contactNumber TEXT, createdAt TEXT, poi INTEGER);",
+      );
+
+      const id = `contact:${Date.now()}:${Math.random().toString(36).slice(2, 8)}`;
+      await env.CONTACTS_DB
+        .prepare(
+          `INSERT INTO contacts (id, name, surname, email, contactNumber, createdAt, poi) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        )
+        .bind(id, entry.name, entry.surname || null, entry.email, entry.contactNumber, entry.createdAt, entry.poi ? 1 : 0)
+        .run();
+
+      return json({ ok: true });
+    } catch (err) {
+      console.error("D1 save failed", err);
+      return json({ ok: false, error: "Failed to save to database" }, { status: 500 });
+    }
+  }
+
+  // Prefer storing in the Durable Object if available
+  if (env && env.CONTACTS_DO) {
+    try {
+      const id = env.CONTACTS_DO.idFromName("contacts");
+      const stub = env.CONTACTS_DO.get(id);
+      const res = await stub.fetch("https://contacts/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(entry),
+      });
+      if (!res.ok) {
+        console.error("DO save failed", await res.text());
+        return json({ ok: false, error: "Failed to save to Durable Object" }, { status: 500 });
+      }
+      return json({ ok: true });
+    } catch (err) {
+      console.error("DO save failed", err);
+      return json({ ok: false, error: "Failed to save to Durable Object" }, { status: 500 });
+    }
+  }
 
   if (env && env.CONTACTS_KV) {
     try {
