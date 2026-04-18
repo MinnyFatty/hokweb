@@ -1,0 +1,194 @@
+﻿// @ts-nocheck
+import { Link, Form, useActionData, useNavigation } from "react-router";
+import type { ActionArgs } from "react-router";
+
+const json = (data: any, init?: ResponseInit) => {
+  const headers = { "Content-Type": "application/json", ...(init?.headers as Record<string, string> | undefined) };
+  return new Response(JSON.stringify(data), { status: init?.status ?? 200, headers });
+};
+
+// Server-side action to handle contact form submissions.
+// When running on Cloudflare Workers this will store submissions in a KV namespace
+// bound as `CONTACTS_KV`. When KV is not available (local Node dev) it falls
+// back to writing a CSV file to `data/contacts.csv`.
+export async function action({ request, context }: ActionArgs) {
+  const formData = await request.formData();
+  const name = (formData.get("name") || "").toString().trim();
+  const surname = (formData.get("surname") || "").toString().trim();
+  const email = (formData.get("email") || "").toString().trim();
+  const contactNumber = (formData.get("contactNumber") || "").toString().trim();
+
+  if (!name || !email || !contactNumber) {
+    return json({ ok: false, error: "Missing required fields" }, { status: 400 });
+  }
+
+  const entry = {
+    name,
+    surname,
+    email,
+    contactNumber,
+    createdAt: new Date().toISOString(),
+    poi: true,
+  };
+
+  // Try to get Cloudflare env from route context (workers/app.ts passes this in)
+  const env = (context as any)?.cloudflare?.env as Record<string, any> | undefined;
+
+  if (env && env.CONTACTS_KV) {
+    try {
+      // Use a unique key per submission
+      const key = `contact:${Date.now()}:${Math.random().toString(36).slice(2, 8)}`;
+      await env.CONTACTS_KV.put(key, JSON.stringify(entry));
+      return json({ ok: true });
+    } catch (err) {
+      console.error("KV put failed", err);
+      return json({ ok: false, error: "Failed to save to KV" }, { status: 500 });
+    }
+  }
+
+  // Fallback for local Node development: write to CSV on disk.
+  try {
+    const { default: fs } = await import("fs");
+    const { default: path } = await import("path");
+
+    const escapeCsv = (value: string) => {
+      if (value.includes(",") || value.includes('"') || value.includes("\n")) {
+        return `"${value.replace(/"/g, '""')}"`;
+      }
+      return value;
+    };
+
+    const csvLine = `${escapeCsv(name)},${escapeCsv(surname)},${escapeCsv(email)},${escapeCsv(contactNumber)},${entry.createdAt}\n`;
+    const dataDir = path.resolve(process.cwd(), "data");
+    const filePath = path.join(dataDir, "contacts.csv");
+
+    if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir);
+    if (!fs.existsSync(filePath)) {
+      fs.writeFileSync(filePath, "name,surname,email,contactNumber,createdAt\n");
+    }
+    fs.appendFileSync(filePath, csvLine);
+    return json({ ok: true });
+  } catch (err) {
+    console.error("Failed to write CSV", err);
+    return json({ ok: false, error: "Failed to save" }, { status: 500 });
+  }
+}
+
+export function meta() {
+  return [{ title: "Contact Us | House Of Knowledge" }];
+}
+
+export default function Contact() {
+  const actionData = useActionData();
+  const navigation = useNavigation();
+  const isSubmitting = navigation.state === "submitting";
+
+  return (
+    <div className="min-h-screen flex flex-col" style={{ background: "linear-gradient(160deg, #f0f6ff 0%, #ffffff 60%, #fdf6e3 100%)" }}>
+      {/* Header */}
+      <header className="w-full py-4 px-8 flex items-center justify-between shadow-sm" style={{ backgroundColor: "#1B3A6B" }}>
+        <Link to="/" className="flex items-center gap-3">
+          <img src="/house_of_knowledge_transparent.ico" alt="House of Knowledge Logo" className="h-10 w-10" />
+          <span className="font-bold text-lg tracking-widest" style={{ color: "#C9963A" }}>
+            HOUSE OF KNOWLEDGE
+          </span>
+        </Link>
+        <Link
+          to="/"
+          className="px-5 py-2 rounded-full font-semibold text-sm tracking-wide transition-all duration-200 hover:opacity-90"
+          style={{ backgroundColor: "#C9963A", color: "#ffffff" }}
+        >
+          ← Back Home
+        </Link>
+      </header>
+
+      {/* Form Section */}
+      <main className="flex-1 flex items-center justify-center px-6 py-16">
+        <div className="w-full max-w-lg rounded-3xl shadow-xl overflow-hidden" style={{ border: "1px solid #C9963A44" }}>
+          {/* Card Header */}
+          <div className="px-10 py-8 text-center" style={{ backgroundColor: "#1B3A6B" }}>
+            <img src="/logo.jpeg" alt="Logo" className="h-20 w-20 object-contain rounded-full mx-auto mb-4 shadow-lg" />
+            <h1 className="text-3xl font-extrabold tracking-wide" style={{ color: "#ffffff" }}>Get In Touch</h1>
+            <p className="mt-1 text-sm" style={{ color: "#A8D8EA" }}>We'd love to hear from you. Leave your details below.</p>
+          </div>
+
+          {/* Card Body */}
+          <div className="px-10 py-8 bg-white">
+            {actionData?.ok && (
+              <div className="mb-6 rounded-xl px-5 py-4 text-center font-semibold text-sm" style={{ backgroundColor: "#e6f4ea", color: "#2d6a4f" }}>
+                ✅ Thank you! We'll be in touch soon.
+              </div>
+            )}
+            {actionData?.error && (
+              <div className="mb-6 rounded-xl px-5 py-4 text-center font-semibold text-sm" style={{ backgroundColor: "#fdecea", color: "#c0392b" }}>
+                ⚠️ {actionData.error}
+              </div>
+            )}
+
+            <Form method="post" className="flex flex-col gap-5">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-bold tracking-wide uppercase" style={{ color: "#1B3A6B" }}>First Name *</label>
+                  <input
+                    name="name"
+                    required
+                    placeholder="John"
+                    className="rounded-xl px-4 py-3 text-sm outline-none border transition focus:ring-2"
+                    style={{ borderColor: "#C9963A66", "--tw-ring-color": "#C9963A" } as React.CSSProperties}
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-bold tracking-wide uppercase" style={{ color: "#1B3A6B" }}>Last Name</label>
+                  <input
+                    name="surname"
+                    placeholder="Doe"
+                    className="rounded-xl px-4 py-3 text-sm outline-none border transition focus:ring-2"
+                    style={{ borderColor: "#C9963A66" }}
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-bold tracking-wide uppercase" style={{ color: "#1B3A6B" }}>Email Address *</label>
+                <input
+                  name="email"
+                  type="email"
+                  required
+                  placeholder="john@example.com"
+                  className="rounded-xl px-4 py-3 text-sm outline-none border transition focus:ring-2"
+                  style={{ borderColor: "#C9963A66" }}
+                />
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-bold tracking-wide uppercase" style={{ color: "#1B3A6B" }}>Contact Number *</label>
+                <input
+                  name="contactNumber"
+                  type="tel"
+                  required
+                  placeholder="+1 234 567 8900"
+                  className="rounded-xl px-4 py-3 text-sm outline-none border transition focus:ring-2"
+                  style={{ borderColor: "#C9963A66" }}
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="mt-2 w-full py-4 rounded-full font-bold text-base tracking-wide shadow-md transition-all duration-200 hover:opacity-90 hover:shadow-lg disabled:opacity-60"
+                style={{ backgroundColor: "#1B3A6B", color: "#ffffff" }}
+              >
+                {isSubmitting ? "Sending..." : "Send Message"}
+              </button>
+            </Form>
+          </div>
+        </div>
+      </main>
+
+      {/* Footer */}
+      <footer className="w-full py-6 text-center text-sm" style={{ backgroundColor: "#1B3A6B", color: "#A8D8EA" }}>
+        © {new Date().getFullYear()} House Of Knowledge. All rights reserved.
+      </footer>
+    </div>
+  );
+}

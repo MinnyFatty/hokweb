@@ -1,3 +1,4 @@
+import { Link } from "react-router";
 import type { Route } from "./+types/home";
 import { Link } from "react-router";
 import { BrandLogo } from "../components/brand";
