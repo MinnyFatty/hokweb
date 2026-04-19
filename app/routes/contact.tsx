@@ -1,6 +1,6 @@
 // @ts-nocheck
-import { Link, Form, useActionData, useNavigation } from "react-router";
 import type { ActionArgs } from "react-router";
+import { handleCreateContactAction } from "../backend/controllers/contactController.server";
 
 export function meta() {
   return [
@@ -12,119 +12,8 @@ export function meta() {
   ];
 }
 
-const json = (data: any, init?: ResponseInit) => {
-  const headers = { "Content-Type": "application/json", ...(init?.headers as Record<string, string> | undefined) };
-  return new Response(JSON.stringify(data), { status: init?.status ?? 200, headers });
-};
-
-// Server-side action to handle contact form submissions.
-// When running on Cloudflare Workers this will store submissions in a KV namespace
-// bound as `CONTACTS_KV`. When KV is not available (local Node dev) it falls
-// back to writing a CSV file to `data/contacts.csv`.
-export async function action({ request, context }: ActionArgs) {
-  const formData = await request.formData();
-  const name = (formData.get("name") || "").toString().trim();
-  const surname = (formData.get("surname") || "").toString().trim();
-  const email = (formData.get("email") || "").toString().trim();
-  const contactNumber = (formData.get("contactNumber") || "").toString().trim();
-
-  if (!name || !email || !contactNumber) {
-    return json({ ok: false, error: "Missing required fields" }, { status: 400 });
-  }
-
-  const entry = {
-    name,
-    surname,
-    email,
-    contactNumber,
-    createdAt: new Date().toISOString(),
-    poi: true,
-  };
-
-  // Try to get Cloudflare env from route context (workers/app.ts passes this in)
-  const env = (context as any)?.cloudflare?.env as Record<string, any> | undefined;
-  // Prefer writing to D1 if available
-  if (env && env.CONTACTS_DB) {
-    try {
-      // Ensure the table exists (safe to run on every submit)
-      await env.CONTACTS_DB.exec(
-        "CREATE TABLE IF NOT EXISTS contacts (id TEXT PRIMARY KEY, name TEXT, surname TEXT, email TEXT, contactNumber TEXT, createdAt TEXT, poi INTEGER);",
-      );
-
-      const id = `contact:${Date.now()}:${Math.random().toString(36).slice(2, 8)}`;
-      await env.CONTACTS_DB
-        .prepare(
-          `INSERT INTO contacts (id, name, surname, email, contactNumber, createdAt, poi) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        )
-        .bind(id, entry.name, entry.surname || null, entry.email, entry.contactNumber, entry.createdAt, entry.poi ? 1 : 0)
-        .run();
-
-      return json({ ok: true });
-    } catch (err) {
-      console.error("D1 save failed", err);
-      return json({ ok: false, error: "Failed to save to database" }, { status: 500 });
-    }
-  }
-
-  // Prefer storing in the Durable Object if available
-  if (env && env.CONTACTS_DO) {
-    try {
-      const id = env.CONTACTS_DO.idFromName("contacts");
-      const stub = env.CONTACTS_DO.get(id);
-      const res = await stub.fetch("https://contacts/save", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(entry),
-      });
-      if (!res.ok) {
-        console.error("DO save failed", await res.text());
-        return json({ ok: false, error: "Failed to save to Durable Object" }, { status: 500 });
-      }
-      return json({ ok: true });
-    } catch (err) {
-      console.error("DO save failed", err);
-      return json({ ok: false, error: "Failed to save to Durable Object" }, { status: 500 });
-    }
-  }
-
-  if (env && env.CONTACTS_KV) {
-    try {
-      // Use a unique key per submission
-      const key = `contact:${Date.now()}:${Math.random().toString(36).slice(2, 8)}`;
-      await env.CONTACTS_KV.put(key, JSON.stringify(entry));
-      return json({ ok: true });
-    } catch (err) {
-      console.error("KV put failed", err);
-      return json({ ok: false, error: "Failed to save to KV" }, { status: 500 });
-    }
-  }
-
-  // Fallback for local Node development: write to CSV on disk.
-  try {
-    const { default: fs } = await import("fs");
-    const { default: path } = await import("path");
-
-    const escapeCsv = (value: string) => {
-      if (value.includes(",") || value.includes('"') || value.includes("\n")) {
-        return `"${value.replace(/"/g, '""')}"`;
-      }
-      return value;
-    };
-
-    const csvLine = `${escapeCsv(name)},${escapeCsv(surname)},${escapeCsv(email)},${escapeCsv(contactNumber)},${entry.createdAt}\n`;
-    const dataDir = path.resolve(process.cwd(), "data");
-    const filePath = path.join(dataDir, "contacts.csv");
-
-    if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir);
-    if (!fs.existsSync(filePath)) {
-      fs.writeFileSync(filePath, "name,surname,email,contactNumber,createdAt\n");
-    }
-    fs.appendFileSync(filePath, csvLine);
-    return json({ ok: true });
-  } catch (err) {
-    console.error("Failed to write CSV", err);
-    return json({ ok: false, error: "Failed to save" }, { status: 500 });
-  }
+export async function action(args: ActionArgs) {
+  return handleCreateContactAction(args);
 }
 
 export default function ContactPage() {
