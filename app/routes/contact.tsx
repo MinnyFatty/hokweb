@@ -157,7 +157,12 @@ export default function ContactPage() {
             </a>
 
             <a className="contact-detail-item" href="mailto:admin@houseofknowledge.net" aria-label="Email House of Knowledge">
-              <span className="contact-icon" aria-hidden="true">✉️</span>
+              <span className="contact-icon" aria-hidden="true">
+                <svg className="social-logo" viewBox="0 0 24 24" role="img" aria-label="Envelope">
+                  <rect x="2.5" y="5" width="19" height="14" rx="2" fill="#f3f7fb" stroke="#113d74" strokeWidth="1.8" />
+                  <path d="M3.8 6.6 12 13.1l8.2-6.5" fill="none" stroke="#113d74" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </span>
               <span>admin@houseofknowledge.net</span>
             </a>
 
